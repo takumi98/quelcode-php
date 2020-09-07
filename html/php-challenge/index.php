@@ -42,6 +42,39 @@ function getRetweetDone($db,$rt_h,$rt_message_id){
 	
   return $result;
 }
+// すでにいいねしていないか調べる
+function getLikeDone($db,$like_message_id){
+	// 全てのいいねの情報を取得
+	$like_lists = $db->query('SELECT * FROM `like`');
+	$like_list = $like_lists->fetchAll();
+	
+  for ($i = 0; $i < count($like_list); $i++) {
+    if ($like_message_id == $like_list[$i]['like_message_id']){
+    $result = true;
+    break;
+    }
+	}
+	
+  return $result;
+}
+// どのユーザーがいいねしたか
+function getLikeDoneId($db,$like_user_id,$like_message_id){
+	// 全てのいいねの情報を取得
+	$like_lists = $db->prepare('SELECT * FROM `like` WHERE like_user_id=?');
+	$like_lists->execute(array(
+		$like_user_id
+	));
+	$like_list = $like_lists->fetchAll();
+	
+  for ($i = 0; $i < count($like_list); $i++) {
+    if ($like_message_id == $like_list[$i]['like_message_id']){
+			$result = true;
+			break;
+    }
+	}
+	
+  return $result;
+}
 
 // ユーザーの過去のRT記事
 function getRetweethistory($db,$user_id){
@@ -54,6 +87,40 @@ function getRetweethistory($db,$user_id){
   return $rt_h;
 }
 
+// ユーザーの過去のいいね
+function getLikehistory($db,$user_id){
+  $like_history = $db->prepare('SELECT * FROM `like` WHERE like_user_id=?');
+	$like_history->execute(array(
+		$user_id
+	));
+	$like_h = $like_history->fetchAll();
+	
+  return $like_h;
+}
+
+
+// 記事がRTかどうか
+function getMessage($db,$message_id){
+	$messages = $db->prepare('SELECT * FROM posts WHERE id=?');
+	$messages->execute(array(
+		$message_id
+	));
+	$result = $messages->fetch();
+
+	return $result;
+}
+
+// いいねを取得
+function getLikeUser($db,$message_id){
+	$like_user = $db->prepare('SELECT `like_user_id` FROM `like` WHERE `like_message_id`=?');
+	$like_user->execute(array(
+		$message_id
+	));
+	$result = $like_user->fetch();
+
+	return $result;
+}
+
 if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	// ログインしている
 	$_SESSION['time'] = time();
@@ -63,7 +130,9 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
   $member = $members->fetch();
 
   // RT履歴
-  $rt_h = getRetweethistory($db,$member['id']);
+	$rt_h = getRetweethistory($db,$member['id']);
+	// いいね履歴
+	$like_h = getLikehistory($db,$member['id']);
 
 } else { // ログインしていない
 	header('Location: login.php'); exit();
@@ -149,6 +218,37 @@ if (isset($_REQUEST['retweet'])) {
 $retweet_lists = $db->query('SELECT * FROM posts WHERE retweet_message_id is not null');
 $retweet_list = $retweet_lists->fetchAll();
 
+// いいねを記録
+if (isset($_REQUEST['like'])) {
+	// いいねの記事がRTかどうか
+	$message_h = getMessage($db,$_REQUEST['like']);
+	if ($message_h['retweet_message_id'] == null){// RTの記事ではない
+		$likes = $db->prepare('INSERT INTO `like` SET `like_user_id`=?, `like_message_id`=?');
+		$likes->execute(array(
+			$member['id'],
+			$_REQUEST['like']
+		));
+		header('Location: index.php');
+		exit();
+	} else {// RTの記事
+		// RTの場合idではなくretweet_message_idでいいねを登録する
+		$retweet_id = $db->prepare('SELECT * FROM `posts` WHERE id=?');
+		$retweet_id->execute(array(
+			$_REQUEST['like']
+		));
+		$rt_id = $retweet_id->fetch();
+	
+		$likes_r = $db->prepare('INSERT INTO `like` SET `like_user_id`=?, `like_message_id`=?');
+		$likes_r->execute(array(
+			$member['id'],
+			$rt_id['retweet_message_id']
+		));
+		header('Location: index.php');
+		exit();
+	}
+}
+
+
 // 返信の場合
 if (isset($_REQUEST['res'])) {
 	$response = $db->prepare('SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND p.id=? ORDER BY p.created DESC');
@@ -173,6 +273,18 @@ if (isset($_REQUEST['delete'])){
 	
   header('Location: index.php'); 
   exit();
+}
+
+// いいねの削除
+if (isset($_REQUEST['like_delete'])){
+	$id = $_REQUEST['like_delete'];
+
+	// ログインユーザーの照会
+	$del = $db->prepare('DELETE FROM `like` WHERE like_user_id=? AND like_message_id=?');
+	$del->execute(array(
+		$_SESSION['id'],
+		$id
+	));
 }
 
 // RTのid
@@ -256,6 +368,24 @@ foreach ($posts as $post):
 				$retweet_count['count'] = '';
 			}
 		?>
+		<?php 
+		// 過去のいいね
+		$like_history_id = getLikeDone($db,$post['id']);
+    // いいねのカウント
+    $like_counts = $db->prepare('SELECT COUNT(*) AS `count` FROM `like` WHERE like_message_id=?');
+		if ((int)$post['retweet_message_id'] != 0) {// いいねしている記事
+			$like_counts->execute(array($post['retweet_message_id']));
+			$like_count = $like_counts->fetch();
+			if ($like_count['count'] == 0) {
+				$like_count['count'] = '';
+			}
+  	} elseif ($like_history_id === true) {// 自いいねされている元の記事
+  	  $like_counts->execute(array($post['id']));
+			$like_count = $like_counts->fetch();
+		} else {// いいねされていない記事
+			$like_count['count'] = '';
+		}
+		?>
     <p>
       <?php echo makeLink(h($post['message'])); ?>
       <span class="name"> <!-- RTの場合もとの記事を投稿したユーザーを表示する -->
@@ -271,7 +401,8 @@ foreach ($posts as $post):
 
 		<!-- リツイートアイコン -->
       <?php if ($post['retweet_message_id'] > 0) {// 記事がRTの場合
-              $retweet_history = getRetweetDone($db,$rt_h,$post['retweet_message_id']);
+							$retweet_history = getRetweetDone($db,$rt_h,$post['retweet_message_id']);
+							$like_user = getLikeUser($db,$post['retweet_message_id']);
       ?>
         <?php if($retweet_history === true){// 過去にRTしている記事?>
                 [<a href="delete.php?id=<?php echo h($post['id']); ?>"><i class="fas fa-retweet active" style="color: rgb(23, 191, 99)"><?php echo h($retweet_count['count']) ?></i></a>]
@@ -287,7 +418,36 @@ foreach ($posts as $post):
                 [<a href="index.php?retweet=<?php echo h($post['id']); ?>"><i class="fas fa-retweet active" style="color: #8899A6"><?php echo h($retweet_count['count']) ?></i></a>]
         <?php } ?>
         <?php }?>
-				
+
+		<!-- いいねボタン -->
+		<?php 
+			if ($post['retweet_message_id'] > 0) {// 記事がRTの場合
+				$like_done = getLikeDone($db,$post['retweet_message_id']);
+				$test = getLikeDoneId($db,$member['id'],$post['retweet_message_id']);
+		?>
+		<?php if ($test === true){?>
+					[<a href="index.php?like_delete=<?php echo h($post['retweet_message_id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
+					エラー１
+		<?php } else {?>
+					[<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]エラー２
+
+		<?php }?>
+		<?php 
+			} else {// 記事がRTじゃない場合
+				$like_done = getLikeDone($db,$post['id']);
+				$test = getLikeDoneId($db,$member['id'],$post['id']);
+		?>
+		<?php if ($test === true){?>
+					[<a href="index.php?like_delete=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
+					エラー３
+		<?php } else {?>
+					[<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]
+					エラー4
+		<?php }?>
+		<?php	
+			}
+		?>	
+
 		</p>
     <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
 		<?php
