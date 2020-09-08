@@ -101,7 +101,6 @@ function getLikehistory($db, $user_id)
     return $like_history->fetchAll();
 }
 
-
 // 記事がRTかどうか
 function getMessage($db, $message_id)
 {
@@ -478,12 +477,10 @@ function makeLink($value)
 
                             <?php } else { ?>
                                 [<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]
-
                             <?php } ?>
                         <?php
                         }
                         ?>
-
                     </p>
                     <p class="day"><a href="view.php?id=<?php echo h($post['id']); ?>"><?php echo h($post['created']); ?></a>
                         <?php
