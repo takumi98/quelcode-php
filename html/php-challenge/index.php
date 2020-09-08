@@ -31,7 +31,7 @@ function getRetweetOriginal($db, $message_id)
 	return $retweet_original->fetch();
 }
 
-// 同じ記事をRTしていないか調べる
+// RTの記事があるか調べる
 function getRetweetDone($db, $rt_h, $rt_message_id)
 {
 	for ($i = 0; $i < count($rt_h); $i++) {
@@ -80,7 +80,7 @@ function getLikeDoneId($db, $like_user_id, $like_message_id)
 }
 
 // ユーザーの過去のRT記事
-function getRetweethistory($db, $user_id)
+function getRetweetHistory($db, $user_id)
 {
 	$retweet_history = $db->prepare('SELECT * FROM posts WHERE member_id=? AND retweet_message_id is not null');
 	$retweet_history->execute(array(
@@ -133,7 +133,7 @@ if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
 	$member = $members->fetch();
 
 	// RT履歴
-	$rt_h = getRetweethistory($db, $member['id']);
+	$rt_h = getRetweetHistory($db, $member['id']);
 	// いいね履歴
 	$like_h = getLikehistory($db, $member['id']);
 } else { // ログインしていない
@@ -274,6 +274,13 @@ if (isset($_REQUEST['delete'])) {
 	// 削除する
 	$del = $db->prepare('DELETE FROM posts WHERE id=?');
 	$del->execute(array($id));
+
+	// RT記事の中に削除したidを持つものがあれば削除
+	$retweet_del = getRetweetDone($db, $retweet_list, $id);
+	if ($retweet_del === true){
+		$rt_del = $db->prepare('DELETE FROM posts WHERE retweet_message_id=?');
+		$rt_del->execute(array($id));
+	}
 
 	header('Location: index.php');
 	exit();
