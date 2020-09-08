@@ -427,9 +427,9 @@ foreach ($posts as $post):
 		?>
 		<?php if ($test === true){?>
 					[<a href="index.php?like_delete=<?php echo h($post['retweet_message_id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
-					エラー１
+					
 		<?php } else {?>
-					[<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]エラー２
+					[<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]
 
 		<?php }?>
 		<?php 
@@ -439,10 +439,10 @@ foreach ($posts as $post):
 		?>
 		<?php if ($test === true){?>
 					[<a href="index.php?like_delete=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
-					エラー３
+					
 		<?php } else {?>
 					[<a href="index.php?like=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: #8899A6"><?php echo h($like_count['count']) ?></i></a>]
-					エラー4
+					
 		<?php }?>
 		<?php	
 			}
