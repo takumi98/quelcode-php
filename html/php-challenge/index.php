@@ -337,9 +337,26 @@ function makeLink($value) {
 foreach ($posts as $post):
 ?>
     <div class="msg">
-		<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+
+		<?php if ($post['retweet_message_id'] == null) {// RTじゃない記事?>
+						<img src="member_picture/<?php echo h($post['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+		<?php } else {// RTの記事
+						// RT元の投稿を取得
+						$retweet_originals = $db->prepare('SELECT * FROM posts WHERE id=?');
+						$retweet_originals->execute(array(
+							$post['retweet_message_id']
+						));
+						$retweet_original = $retweet_originals->fetch();
+						// RT元の記事を投稿したユーザーの画像を取得
+						$retweet_users_img = $db->prepare('SELECT picture FROM members WHERE id=?');
+						$retweet_users_img->execute(array($retweet_original['member_id']));
+						$retweet_user = $retweet_users_img->fetch();
+		?>
+						<img src="member_picture/<?php echo h($retweet_user['picture']); ?>" width="48" height="48" alt="<?php echo h($post['name']); ?>" />
+		<?php } ?>
+		
 		<!-- 投稿がリツートかどうか -->
-		<?php if ((int)$post['retweet_message_id'] != 0) {
+		<?php if ((int)$post['retweet_message_id'] !== 0) {
 						$retweet_users = $db->prepare('SELECT name FROM members WHERE id=?');
 						$retweet_users->execute(array($post['member_id']));
 						$retweet_user = $retweet_users->fetch();
