@@ -194,7 +194,7 @@ if (isset($_REQUEST['retweet'])) {
 	));
 	$retweet = $retweet_messages->fetch();
 
-	if ($rt_conf['conf'] == 0) { // リツイートされていない
+	if ((int)$rt_conf['conf'] === 0) { // リツイートされていない
 		// RTの投稿をRTしていてもとのms_idじゃない場合
 		if ($retweet['retweet_message_id'] != 0) {
 			$rt_message = $db->prepare('INSERT INTO posts SET message=?, member_id=?, reply_post_id=0, retweet_message_id=?, created=NOW()');
@@ -277,7 +277,7 @@ if (isset($_REQUEST['delete'])) {
 
 	// RT記事の中に削除したidを持つものがあれば削除
 	$retweet_del = getRetweetDone($db, $retweet_list, $id);
-	if ($retweet_del === true){
+	if ($retweet_del === true) {
 		$rt_del = $db->prepare('DELETE FROM posts WHERE retweet_message_id=?');
 		$rt_del->execute(array($id));
 	}
@@ -290,7 +290,7 @@ if (isset($_REQUEST['delete'])) {
 if (isset($_REQUEST['like_delete'])) {
 	$id = $_REQUEST['like_delete'];
 
-	// ログインユーザーの照会
+	// 削除時、ログインユーザーの場合だけ削除可能
 	$del = $db->prepare('DELETE FROM `like` WHERE like_user_id=? AND like_message_id=?');
 	$del->execute(array(
 		$_SESSION['id'],
