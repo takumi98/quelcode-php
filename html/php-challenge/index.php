@@ -460,9 +460,9 @@ function makeLink($value)
 						<?php
 						if ($post['retweet_message_id'] > 0) { // 記事がRTの場合
 							$like_done = getLikeDone($db, $post['retweet_message_id']);
-							$test = getLikeDoneId($db, $member['id'], $post['retweet_message_id']);
+							$like_done_id = getLikeDoneId($db, $member['id'], $post['retweet_message_id']);
 						?>
-							<?php if ($test === true) { ?>
+							<?php if ($like_done_id === true) { ?>
 								[<a href="index.php?like_delete=<?php echo h($post['retweet_message_id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
 
 							<?php } else { ?>
@@ -472,9 +472,9 @@ function makeLink($value)
 						<?php
 						} else { // 記事がRTじゃない場合
 							$like_done = getLikeDone($db, $post['id']);
-							$test = getLikeDoneId($db, $member['id'], $post['id']);
+							$like_done_id = getLikeDoneId($db, $member['id'], $post['id']);
 						?>
-							<?php if ($test === true) { ?>
+							<?php if ($like_done_id === true) { ?>
 								[<a href="index.php?like_delete=<?php echo h($post['id']); ?>"><i class="fas fa-heart active" style="color: rgb(224, 36, 94);"><?php echo h($like_count['count']) ?></i></a>]
 
 							<?php } else { ?>
