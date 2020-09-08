@@ -22,7 +22,7 @@ if (isset($_SESSION['id'])) {
 			$_SESSION['id'],
 			$id
 		));
-	} elseif ($message['retweet_message_id'] != null && $_SESSION['id'] != $message['member_id']){// 他のユーザーにRTされた記事
+	} elseif ($_SESSION['id'] != $message['member_id']){// 他のユーザーにRTされた記事
 		$del = $db->prepare('DELETE FROM posts WHERE member_id=? AND retweet_message_id=?');
 		$del->execute(array(
 			$_SESSION['id'],
