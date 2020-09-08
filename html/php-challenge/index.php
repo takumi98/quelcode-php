@@ -9,9 +9,8 @@ function getRetweetMessage($db,$message_id) {
 		$retweets->execute(array(
 			$message_id
 		));
-		$retweet_message = $retweets->fetch();
 
-		return $retweet_message;
+		return $retweets->fetch();
 }
 
 // RTした元の記事のidを取得
@@ -26,9 +25,8 @@ function getRetweetOriginal($db,$message_id) {
   $retweet_original->execute(array(
     $rt_o['member_id']
   ));
-  $result = $retweet_original->fetch();
 
-  return $result;
+  return $retweet_original->fetch();
 }
 
 // 同じ記事をRTしていないか調べる
@@ -82,9 +80,8 @@ function getRetweethistory($db,$user_id){
 	$retweet_history->execute(array(
 		$user_id
 	));
-	$rt_h = $retweet_history->fetchAll();
 	
-  return $rt_h;
+  return $retweet_history->fetchAll();
 }
 
 // ユーザーの過去のいいね
@@ -93,9 +90,8 @@ function getLikehistory($db,$user_id){
 	$like_history->execute(array(
 		$user_id
 	));
-	$like_h = $like_history->fetchAll();
 	
-  return $like_h;
+  return $like_history->fetchAll();
 }
 
 
@@ -105,9 +101,8 @@ function getMessage($db,$message_id){
 	$messages->execute(array(
 		$message_id
 	));
-	$result = $messages->fetch();
 
-	return $result;
+	return $messages->fetch();
 }
 
 // いいねを取得
@@ -116,9 +111,8 @@ function getLikeUser($db,$message_id){
 	$like_user->execute(array(
 		$message_id
 	));
-	$result = $like_user->fetch();
 
-	return $result;
+	return $like_user->fetch();
 }
 
 if (isset($_SESSION['id']) && $_SESSION['time'] + 3600 > time()) {
@@ -472,7 +466,6 @@ endif;
 <?php
 endforeach;
 ?>
-
 
 <ul class="paging">
 <?php
